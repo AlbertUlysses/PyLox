@@ -4,25 +4,29 @@ from sys import argv, exit, stderr
 from scanner import Scanner
 from report_error import report_error
 
-def run(source: str) ->None:
+def run(source: str) ->bool:
     """..."""
+    # can report error here
     scanner = Scanner(source)
     tokens = scanner.scan_tokens()
     for token in tokens:
         print(f"{token}")
-    # print(source)
+    return scanner.has_error
 
 def run_prompt() -> None:
     """..."""
+    # when error is here it needs to report and keep running
     while value := input("> "):
         run(value)
 
 def run_file(path: str) ->None:
     """ """
+    # when error is here it need to crash and exit(65)
     with open(path, "r") as file_:
-        data = file_.read()
-    if not run(data):
-        exit(65)
+        while (data := file_.readline()) != '':
+            has_error = run(data)
+            if has_error:
+                exit(63)
 
 def main():
     parser = argparse.ArgumentParser(

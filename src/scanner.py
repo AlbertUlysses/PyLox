@@ -11,6 +11,7 @@ class Scanner:
     start: int = 0
     current: int = 0
     line: int = 1
+    has_error: bool = False
     tokens: list[Token] = field(default_factory=list)
     keywords: dict = field(default_factory=dict)
 
@@ -33,15 +34,17 @@ class Scanner:
             "var" : TokenType.VAR,
             "while" : TokenType.WHILE
         }
+
     def scan_tokens(self)->list[Token]:
         while not self.is_at_end:
             self.start = self.current
-            self.scan_token()
+            self.scan_token(self.source[self.current])
+            if not self.is_at_end:
+                self.advance()
         self.tokens.append(Token(TokenType.EOF, "", None, self.line))
         return self.tokens
 
-    def scan_token(self) -> None:
-        c = self.advance()
+    def scan_token(self, c: str) -> None:
         match c:
             case '(':
                 self.add_token(TokenType.LEFT_PAREN)
@@ -89,7 +92,8 @@ class Scanner:
                 elif self.is_alpha(c):
                     self.identifier
                 else:
-                    report_error(line, "", "Unexpected Character.")
+                    report_error(self.line, "", "Unexpected Character.")
+                    self.has_error = True
 
     def is_digit(self, c: str) -> bool:
         return (c >= '0') & (c <= '9')
@@ -104,17 +108,20 @@ class Scanner:
         return self.is_alpha(c) | self.is_digit(c)
 
     def string(self) -> None:
-        while (self.peek != '"') & self.is_at_end:
+        while (self.peek != '"') & (not self.is_at_end):
             if self.peek == '\n':
                 self.line += 1
-                self.advance()
+            self.advance()
         if self.is_at_end:
-            report(line, "", "Unterminated String.")
-        self.advance()
-        value = self.source[self.start+1:self.current-1]
-        self.add_token(TokenType.STRING, value)
+            report_error(self.line, "", "Unterminated String.")
+        else:
+            self.advance() # account for the next letter
+            self.current += 1 #account for the quote
+            value = self.source[self.start:self.current]
+            self.add_token(TokenType.STRING, value.strip('"'))
 
     def advance(self) -> str:
+        #if not self.is_at_end:
         self.current += 1
         return self.source[self.current]
 
@@ -125,14 +132,16 @@ class Scanner:
     def match(self, expected: str) -> bool:
         if self.is_at_end:
             return False
-        if self.source[self.current] != expected:
+        if self.source[self.current+1] != expected:
             return False
         self.current += 1
         return True
 
     @property
     def identifier(self) -> None:
-        while self.is_alpha_numeric(self.peek):
+        """..."""
+        #while (self.is_alpha_numeric(self.peek)):
+        while self.is_alpha_numeric(self.source[self.current]):
             self.advance()
         text = self.source[self.start:self.current]
         token_type = self.keywords.get(text, None)
@@ -157,7 +166,7 @@ class Scanner:
         if self.is_at_end:
             return '\0'
         else:
-            return self.source[self.current]
+            return self.source[self.current+1]
     @property
     def peek_next(self) -> str:
         if self.current + 1  >= (len(self.source)-1):
