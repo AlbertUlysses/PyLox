@@ -39,8 +39,7 @@ class Scanner:
         while not self.is_at_end:
             self.start = self.current
             self.scan_token(self.source[self.current])
-            if not self.is_at_end:
-                self.advance()
+            self.advance()
         self.tokens.append(Token(TokenType.EOF, "", None, self.line))
         return self.tokens
 
@@ -108,29 +107,30 @@ class Scanner:
         return self.is_alpha(c) | self.is_digit(c)
 
     def string(self) -> None:
-        while (self.peek != '"') & (not self.is_at_end):
+        self.current += 1
+        while (self.source[self.current] != '"'):
+            if self.current >= len(self.source)-1:
+                break
             if self.peek == '\n':
                 self.line += 1
             self.advance()
-        if self.is_at_end:
+        if self.source[self.current] != '"':
+            print(self.source[self.current])
             report_error(self.line, "", "Unterminated String.")
         else:
-            self.advance() # account for the next letter
-            self.current += 1 #account for the quote
             value = self.source[self.start:self.current]
             self.add_token(TokenType.STRING, value.strip('"'))
 
     def advance(self) -> str:
-        #if not self.is_at_end:
         self.current += 1
-        return self.source[self.current]
 
     def add_token(self, type: TokenType, literal: object = None) -> None:
-        text = self.source[self.start:self.current]
+        text = self.source[self.start:self.current+1]
         self.tokens.append(Token(type, text, literal, self.line))
 
     def match(self, expected: str) -> bool:
-        if self.is_at_end:
+        if not self.is_next_at_end:
+            print("here")
             return False
         if self.source[self.current+1] != expected:
             return False
@@ -140,26 +140,41 @@ class Scanner:
     @property
     def identifier(self) -> None:
         """..."""
-        #while (self.is_alpha_numeric(self.peek)):
-        while self.is_alpha_numeric(self.source[self.current]):
+        while (not self.is_at_end):
+            if not (self.is_alpha_numeric(self.source[self.current])):
+                self.current -= 1
+                break
             self.advance()
-        text = self.source[self.start:self.current]
+        text = self.source[self.start:self.current+1]
         token_type = self.keywords.get(text, None)
         if not token_type:
             token_type = TokenType.IDENTIFIER 
-        self.add_token(token_type)
+        self.add_token(token_type, text)
 
     @property
     def number(self) -> None:
-        while self.is_digit(self.peek):
+        peek_counter = 0
+        while (
+            (self.current < len(self.source))
+        ):
+            if not ((self.is_digit(self.source[self.current])) | (self.source[self.current] == '.')):
+                break
+            if self.source[self.current] == '.':
+                peek_counter +=1
             self.advance()
-        if self.peek == '.' & self.is_digit(self.peek_next):
-            self.advance()
-            while self.is_digit(self.peek):
-                self.advance()
-        self.add_token(
-            TokenType.NUMBER, eval(self.source[self.start, self.current])
-        )
+        if (self.current >= len(self.source)):
+            self.current -= 1
+        if not ((self.is_digit(self.source[self.current])) | (self.source[self.current] == '.')):
+            report_error(self.line, "", "Improper Digit.")
+        elif peek_counter > 1:
+            report_error(self.line, "", "Improper Digit.")
+        else:
+            self.add_token(
+                TokenType.NUMBER,
+                eval(self.source[self.start: self.current+1])
+                if self.current-self.start != 0
+                else eval(self.source[self.current])
+            )
 
     @property
     def peek(self) -> str:
@@ -171,8 +186,11 @@ class Scanner:
     def peek_next(self) -> str:
         if self.current + 1  >= (len(self.source)-1):
             return '\0'
-        return self.source[self.current+1]
+        return self.source[self.current+2]
 
     @property
     def is_at_end(self) -> bool:
-        return self.current >= (len(self.source)-1)
+        return self.current > (len(self.source)-1)
+
+    def is_next_at_end(self) ->bool:
+        return self.current+1 > (len(self.source)-1)
