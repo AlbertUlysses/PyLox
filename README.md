@@ -1,5 +1,5 @@
-## My Port of Lox using Python for Chapter 4-8
-Will most likely never port the rest of the second half of the book - I'm most interested in redoing the lang in C
+## My Port of Lox using Python for Chapter 4
+Will most likely never port the rest of the second half of the book - I'm most interested in redoing the lang in C but wanted to play around with the scanner
 
 ## To run prompt
 ```uv run src/lox.py ```

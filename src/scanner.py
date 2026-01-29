@@ -1,3 +1,4 @@
+from sys import exit
 from dataclasses import dataclass, field
 
 from lox_token import Token
@@ -32,7 +33,8 @@ class Scanner:
             "this" : TokenType.THIS,
             "true" : TokenType.TRUE,
             "var" : TokenType.VAR,
-            "while" : TokenType.WHILE
+            "while" : TokenType.WHILE,
+            "exit": TokenType.EXIT
         }
 
     def scan_tokens(self)->list[Token]:
