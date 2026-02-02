@@ -3,14 +3,18 @@ from sys import argv, exit, stderr
 
 from scanner import Scanner
 from report_error import report_error
+from parser import Parser
+from ast_printer import ASTPrinter
 
 def run(source: str) ->bool:
     """..."""
     # can report error here
     scanner = Scanner(source)
     tokens = scanner.scan_tokens()
-    for token in tokens:
-        print(f"{token}")
+    parser = Parser(tokens)
+    expression = parser.parse()
+    if expression:
+        print(f"{ASTPrinter().print_ast(expression)}")
     return scanner.has_error
 
 def run_prompt() -> None:
