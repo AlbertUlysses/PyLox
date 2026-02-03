@@ -5,17 +5,18 @@ from scanner import Scanner
 from report_error import report_error
 from parser import Parser
 from ast_printer import ASTPrinter
+from interpreter import Interpeter
 
 def run(source: str) ->bool:
     """..."""
     # can report error here
+    interpreter = Interpeter()
     scanner = Scanner(source)
     tokens = scanner.scan_tokens()
     parser = Parser(tokens)
     expression = parser.parse()
     if expression:
-        print(f"{ASTPrinter().print_ast(expression)}")
-    return scanner.has_error
+        interpreter.interpret(expression)
 
 def run_prompt() -> None:
     """..."""

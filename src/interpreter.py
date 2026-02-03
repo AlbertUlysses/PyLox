@@ -1,8 +1,9 @@
 from dataclasses import dataclass
 
-from report_error import LoxRuntimeError
+from report_error import LoxRuntimeError, report_error
 from expr import Expr, Binary, Grouping, Literal, Unary
 from lox_token import Token
+from token_type import TokenType
 
 @dataclass
 class Interpeter:
@@ -17,7 +18,7 @@ class Interpeter:
         right = self.evaluate(expr.right)
         match expr.operator.type:
             case TokenType.BANG:
-                return not self.is_truthy(right))
+                return not self.is_truthy(right)
             case TokenType.MINUS:
                 self.check_number_operand(expr.operator, right)
                 return -(float(right))
@@ -47,7 +48,7 @@ class Interpeter:
             case TokenType.MINUS:
                 self.check_number_operands(expr.operator, left,right)
                 return float(left) - float(right)
-            case TokenType.Plus:
+            case TokenType.PLUS:
                 if (isinstance(left,(int, float)) & isinstance(right,(int, float))):
                     return left + right
                 if (isinstance(left,str) & isinstance(right,str)):
@@ -63,7 +64,7 @@ class Interpeter:
                 return None
 
     def evaluate(self, expr: Expr) -> object:
-        return expr.accept(this)
+        return expr.accept(self)
 
     def check_number_operand(self, operator: Token, operand: object) -> None:
         if isinstance(operand, (int, float)):
@@ -71,9 +72,9 @@ class Interpeter:
         raise LoxRuntimeError(f"Operator: {Operator.type}. Operand must be a number.")
 
     def check_number_operands(self, operator: Token, left: object, right: object) -> None:
-        if (isinstance(left, (int, float)) & isinstance(right, (int, float)):
+        if (isinstance(left, (int, float)) & isinstance(right, (int, float))):
             return None
-        raise LoxRuntimeError(f"Operator: {Operator.type}. Operand must be a number.")
+        raise LoxRuntimeError(f"Operator: {operator.type}. Operand must be a number.")
 
     def is_truthy(self, exp_object: object) -> bool:
         if expr_object is None:
@@ -88,3 +89,10 @@ class Interpeter:
         if ((a is None) | (b is None)):
             return False 
         return a == b
+    def interpret(self, expression: Expr) ->None:
+            try:
+                value = "nil" if self.evaluate(expression) is None else self.evaluate(expression)
+                print(value)
+            except LoxRuntimeError:
+                # may need to come back to clean this up but also - I don't really care
+                print("error @LoxRuntime")
